@@ -11,6 +11,8 @@ public class Account {
         this.Records = Records;
     }
 
+    public Account() {}
+
     String name;
     String balance;
     String clearing;

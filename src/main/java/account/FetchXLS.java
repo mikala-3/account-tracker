@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -21,7 +22,7 @@ public class FetchXLS {
 
     public static String KONTOFORM = "kontoform:";
     public void startReadXLS() throws IOException {
-        FileInputStream excelFile = new FileInputStream(new File("./"+fileName));
+        FileInputStream excelFile = new FileInputStream(new File(fileName));
 
         //HSSF for .xls and XSSF .xlsx
         //getting the workbook instance for XLS file
@@ -54,7 +55,6 @@ public class FetchXLS {
                     break;
                 case "Saldo:":
                     balance = row.getCell(++cellCounter).toString();
-
                     break;
                 default:
                     if(rowCounter > 6 && row.getCell(cellCounter).toString() != "") {
@@ -73,7 +73,11 @@ public class FetchXLS {
         objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
 
         // We write the `Account` into `person2.yaml`
+//        objectMapper.writeValue(new File("./src/main/resources/accountHistory.yaml"), accountInfo);
         objectMapper.writeValue(new File("./src/main/resources/accountHistory.yaml"), accountInfo);
+        String yamlString = objectMapper.writeValueAsString(accountInfo);
+        System.out.println(yamlString);
+        //Account employee2 = objectMapper.readValue(yamlString, Account.class);
     }
 
     public static void main(String args[]) throws Exception
