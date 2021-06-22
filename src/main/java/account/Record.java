@@ -7,7 +7,7 @@ public class Record {
         this.amount = amount;
         this.event = event;
     }
-
+//from testbranch
     public Record() {}
 
     String date;

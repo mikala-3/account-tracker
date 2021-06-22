@@ -1,3 +1,4 @@
 ./src/main/resources/*.yaml
 ./src/main/resources/xls/*.xls
 *.xls
+./target
