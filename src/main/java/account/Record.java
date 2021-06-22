@@ -20,5 +20,5 @@ public class Record {
     This comment i want to use with the cherry pick, and now i changed it for another commit (this should not be cherry picked)
  */
 /*
- and just another commit
+ and just another commit, this is also for git diff
  */
