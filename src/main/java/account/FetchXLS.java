@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,16 +13,19 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import database.MysqlTutorial;
+import http.JettyServer;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 
 public class FetchXLS {
 
-    public String fileName = "./src/main/resources/xls/transaktioner.xls";
+    private String fileName = "./src/main/resources/xls/transaktioner.xls";
+    private static String KONTOFORM = "kontoform:";
+    private MysqlTutorial mysqlTutorial;
 
-    public static String KONTOFORM = "kontoform:";
-    public void startReadXLS() throws IOException {
+    public void startReadXLS() throws IOException, SQLException {
         FileInputStream excelFile = new FileInputStream(new File(fileName));
 
         //HSSF for .xls and XSSF .xlsx
@@ -36,12 +40,12 @@ public class FetchXLS {
         createFileForHandelsbanken(sheet);
     }
 
-    public void createFileForHandelsbanken(HSSFSheet sheet) throws IOException {
+    public void createFileForHandelsbanken(HSSFSheet sheet) throws IOException, SQLException {
 
         String name = "";
         String balance = "";
         String clearing = "";
-        List<Record> records = new ArrayList<Record>();
+        List<Record> records = new ArrayList<>();
         int cellCounter = 0;
         int rowCounter = 0;
         for(Row row: sheet)     //iteration over row using for each loop
@@ -57,7 +61,8 @@ public class FetchXLS {
                     balance = row.getCell(++cellCounter).toString();
                     break;
                 default:
-                    if(rowCounter > 6 && row.getCell(cellCounter).toString() != "") {
+                    if(rowCounter > 6 && row.getCell(cellCounter).toString() != "")
+                    {
                         records.add(new Record(row.getCell(cellCounter += 2).toString(),
                                 row.getCell(cellCounter += 2).toString(),
                                 row.getCell(cellCounter + 2).toString()));
@@ -67,21 +72,21 @@ public class FetchXLS {
             cellCounter = 0;
         }
         Account accountInfo = new Account(name, balance, clearing, records);
-        // ObjectMapper is instantiated just like before
-        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        //jackson by default only detect fields that are not of the visibility: private/package
-        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
 
-        // We write the `Account` into `person2.yaml`
-//        objectMapper.writeValue(new File("./src/main/resources/accountHistory.yaml"), accountInfo);
-        objectMapper.writeValue(new File("./src/main/resources/accountHistory.yaml"), accountInfo);
-        String yamlString = objectMapper.writeValueAsString(accountInfo);
-        System.out.println(yamlString);
-        //Account employee2 = objectMapper.readValue(yamlString, Account.class);
+        //TODO, skicka alla records i accountInfo till databasen. date, amount och event (allt är strings)
+        MysqlTutorial mysqlTutorial = new MysqlTutorial();
+        mysqlTutorial.makeJDBCConnection();
+
+        for (Record record : accountInfo.getRecords())
+            mysqlTutorial.insertRecord(record);
+
+        mysqlTutorial.closeSQLConnection();
     }
 
     public static void main(String args[]) throws Exception
     {
+        JettyServer httpserver = new JettyServer();
+        httpserver.start();
         FetchXLS xlsOutput = new FetchXLS();
         xlsOutput.startReadXLS();
     }
